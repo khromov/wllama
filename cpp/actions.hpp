@@ -658,12 +658,12 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
   glue_msg_get_kv_remove_res res;
   bool & success = res.success.value;
   success = false;
+  res.n_past.value = app.tokens.size();
 
   llama_pos pos_min = llama_memory_seq_pos_min(mem, 0);
   if (pos_min > 0) {
     // TODO: rm tokens from SWA is currently unsupported
     success = false;
-    res.n_past.value = app.tokens.size();
     return res;
   }
 
@@ -674,7 +674,6 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
     success = llama_memory_seq_rm(mem, 0, n_keep, n_keep + n_discard);
     if (!success)
     {
-      res.n_past.value = app.tokens.size();
       return res;
     }
     llama_memory_seq_add(mem, 0, n_keep + n_discard, n_past, -n_discard);
@@ -687,15 +686,12 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
     if (n_keep == 0)
     {
       llama_memory_clear(mem, true);
-      app.tokens.clear();
-      success = true;
     }
     else
     {
       success = llama_memory_seq_rm(mem, 0, n_keep, -1);
       if (!success)
       {
-        res.n_past.value = app.tokens.size();
         return res;
       }
       app.tokens.erase(
@@ -704,7 +700,6 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
     }
   }
 
-  res.n_past.value = app.tokens.size();
   return res;
 }
 
