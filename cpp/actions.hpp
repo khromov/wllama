@@ -686,6 +686,8 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
     if (n_keep == 0)
     {
       llama_memory_clear(mem, true);
+      app.tokens.clear();
+      success = true;
     }
     else
     {
@@ -700,6 +702,7 @@ glue_msg_get_kv_remove_res action_kv_remove(app_t &app, const char *req_raw)
     }
   }
 
+  res.n_past.value = app.tokens.size();
   return res;
 }
 

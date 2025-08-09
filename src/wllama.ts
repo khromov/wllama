@@ -1195,7 +1195,7 @@ export class Wllama {
     if (!result.success) {
       throw new WllamaError('kvRemove unknown error');
     }
-    this.nCachedTokens -= nDiscard;
+    this.nCachedTokens = result.n_past;
   }
 
   /**

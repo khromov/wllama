@@ -400,3 +400,43 @@ test.sequential('cleans up resources', async () => {
   // Double check that the model is really unloaded
   expect(wllama.isModelLoaded()).toBe(false);
 });
+
+test.sequential(
+  'should reuse KV cache',
+  async () => {
+    let lastKeep = -1;
+    const wllama = new Wllama(CONFIG_PATHS, {
+      logger: {
+        ...console,
+        debug: (msg) => {
+          if (typeof msg === 'string' && msg.startsWith('Cache nKeep=')) {
+            lastKeep = parseInt(msg.split('=')[1]);
+          }
+        },
+      },
+    });
+    await wlama.loadModelFromUrl(TINY_MODEL, {
+      n_ctx: 2048,
+    });
+    const MOCK_PROMPT = 'The quick brown fox';
+    const MOCK_PROMPT_2 = 'The quick brown fox jumps over the lazy dog';
+    const MOCK_SAMPLING_CONFIG = {
+      temp: 0,
+    };
+    // first completion
+    await wlama.createCompletion(MOCK_PROMPT, {
+      nPredict: 5,
+      useCache: true,
+      sampling: MOCK_SAMPLING_CONFIG,
+    });
+    // second completion
+    await wlama.createCompletion(MOCK_PROMPT_2, {
+      nPredict: 5,
+      useCache: true,
+      sampling: MOCK_SAMPLING_CONFIG,
+    });
+    expect(lastKeep).toBeGreaterThan(0);
+    await wllama.exit();
+  },
+  { timeout: 60000 },
+);
